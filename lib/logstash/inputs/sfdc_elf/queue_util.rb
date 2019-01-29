@@ -119,11 +119,11 @@ class QueueUtil
       end
 
       # Allow Elasticsearch index's have to types set to EventType.
-      event['type'] = event_type.downcase
+      event.set('type', event_type.downcase)
 
       # Add the schema data pair to event object.
       if data[i] != nil
-        event[schema_name] = data[i]
+        event.set(schema_name, data[i])
       end
     end
 
