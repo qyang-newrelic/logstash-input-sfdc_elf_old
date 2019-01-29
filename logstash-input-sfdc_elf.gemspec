@@ -10,6 +10,10 @@ Gem::Specification.new do |s|
   s.homepage        = 'http://www.salesforce.com'
   s.require_paths   = ['lib']
 
+
+  # Files
+  s.files = Dir['Gemfile', 'README.md', 'MIT-LICENSE', 'Rakefile', 'logstash-input-sfdc_elf.gemspec', 'lib/**/*']
+  
   # Tests
   s.test_files = s.files.grep(%r{^(test|spec|features)/})
 

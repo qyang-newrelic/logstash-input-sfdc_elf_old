@@ -103,17 +103,18 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC "
+                   WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC"
 
 
       query_result_list = @client.query(soql_expr)
 
       @logger.info("#{LOG_KEY}: query result size = #{query_result_list.size}")
 
-      if !query_result_list.empty?
+      if query_result_list.size > 0
         # query_result_list is in ascending order based on the LogDate, so grab the last one of the list and save the
         # LogDate to @last_read_log_date and .sfdc_info_logstash
-        @last_indexed_log_date = query_result_list.last.LogDate.strftime('%FT%T.%LZ')
+        last_log = query_result_list.max_by { |l| l.LogDate }
+        @last_indexed_log_date = DateTime.parse(last_log.LogDate).strftime('%FT%T.%LZ')
 
         # TODO: grab tempfiles here!!
 
