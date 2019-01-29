@@ -1,7 +1,6 @@
 # encoding: utf-8
 require 'logstash/inputs/base'
 require 'logstash/namespace'
-require_relative 'sfdc_elf/client_with_streaming_support'
 require_relative 'sfdc_elf/queue_util'
 require_relative 'sfdc_elf/state_persistor'
 require_relative 'sfdc_elf/scheduler'
@@ -48,22 +47,25 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
   public
   def register
-    # Initialize the client.
-    @client = ClientWithStreamingSupport.new
-    @client.client_id     = @client_id.value
-    @client.client_secret = @client_secret.value
-    @client.host          = @host
-    @client.version       = '44.0'
 
-    # Authenticate the client
-    @logger.info("#{LOG_KEY}: tyring to authenticate client")
-    @client.retryable_authenticate(username: @username,
-                                   password: @password.value + @security_token.value,
-                                   retry_attempts: RETRY_ATTEMPTS)
+    begin
+      # Authenticate the client
+      @logger.info("#{LOG_KEY}: tyring to authenticate client")
+      @client = Restforce.new(username: @username,
+                              password: @password.value,
+                              secureity_token: @security_token.value,
+                              client_id: @client_id.value,
+                              client_secret: @client_secret.value,
+                              api_version: '44.0')
+    rescue
+      @logger.info("#{LOG_KEY}: authentication failed")
+      raise e 
+    end
+
     @logger.info("#{LOG_KEY}: authenticating succeeded")
 
     # Save org id to distinguish between multiple orgs.
-    @org_id = @client.query('select id from Organization')[0]['Id']
+    @org_id = @client.query('select id from Organization').first.Id
 
     # Set up time interval for forever while loop.
     @poll_interval_in_seconds = @poll_interval_in_minutes * 60
@@ -103,10 +105,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
                    WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC "
 
 
-      query_result_list = @client.retryable_query(username: @username,
-                                                  password: @password.value + @security_token.value,
-                                                  retry_attempts: RETRY_ATTEMPTS,
-                                                  soql_expr: soql_expr)
+      query_result_list = @client.query(soql_expr)
 
       @logger.info("#{LOG_KEY}: query result size = #{query_result_list.size}")
 

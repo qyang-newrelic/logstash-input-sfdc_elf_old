@@ -71,12 +71,12 @@ class QueueUtil
 
     field_types.each_with_index do |type, i|
       case type
-        when 'Number'
+        when 'Number', 'Long', 'Long_Double'
           data[i] = (string_array[i].empty?) ? nil : string_array[i].to_f
+        when 'Integer'
+          data[i] = (string_array[i].empty?) ? nil : string_array[i].to_i
         when 'Boolean'
           data[i] = (string_array[i].empty?) ? nil : (string_array[i] == '0')
-        when 'IP'
-          data[i] = valid_ip(string_array[i]) ? string_array[i] : nil
         else # 'String', 'Id', 'EscapedString', 'Set'
           data[i] = (string_array[i].empty?) ? nil : string_array[i]
       end
@@ -149,7 +149,8 @@ class QueueUtil
     query_result_list.each do |event_log_file|
       # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
       tmp = Tempfile.new('sfdc_elf_tempfile')
-      client.streaming_download(event_log_file.LogFile, tmp)
+
+      tmp.write client.get(event_log_file.LogFile).body
 
       # Flushing will write the buffer into the Tempfile itself.
       tmp.flush
