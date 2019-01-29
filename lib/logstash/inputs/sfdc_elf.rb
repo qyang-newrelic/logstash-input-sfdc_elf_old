@@ -41,7 +41,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
   config :path, validate: :string, default: Dir.home
 
   # Specify how often the plugin should grab new data in terms of minutes.
-  config :poll_interval_in_minutes, validate: [*1..(24 * 60)], default: (24 * 60)
+  config :poll_interval_in_minutes, validate: [*1..(24 * 60)], default: 60
 
 
   # The first part of logstash pipeline is register, where all instance variables are initialized.
@@ -98,9 +98,9 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       @logger.info('---------------------------------------------------')
 
       # Grab a list of SObjects, specifically EventLogFiles.
-      soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes
+      soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate > #{@last_indexed_log_date} ORDER BY LogDate ASC "
+                   WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC "
 
 
       query_result_list = @client.retryable_query(username: @username,
