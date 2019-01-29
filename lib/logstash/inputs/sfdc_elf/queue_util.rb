@@ -29,10 +29,11 @@ class QueueUtil
     @logger.info("#{LOG_KEY}: enqueue events")
 
     # Grab a list of Tempfiles that contains CSV file data.
-    event_log_file_records = get_event_log_file_records(query_result_list, client)
+    # event_log_file_records = get_event_log_file_records(query_result_list, client)
 
     # Iterate though each record.
-    event_log_file_records.each do |elf|
+    query_result_list.each do |result|
+      elf = get_event_log_file_records(result, client)
       begin
         # Create local variable to simplify & make code more readable.
         tmp = elf.temp_file
@@ -143,35 +144,33 @@ class QueueUtil
   # where the user can read the Tempfile and then close it and unlink it, which will delete the file.
 
   public
-  def get_event_log_file_records(query_result_list, client)
+  def get_event_log_file_records(event_log_file, client)
     @logger.info("#{LOG_KEY}: generating tempfile list")
-    result = []
-    query_result_list.each do |event_log_file|
-      # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
-      tmp = Tempfile.new('sfdc_elf_tempfile')
+    # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
+    tmp = Tempfile.new('sfdc_elf_tempfile')
 
-      tmp.write client.get(event_log_file.LogFile).body
+    tmp.write client.get(event_log_file.LogFile).body
 
-      # Flushing will write the buffer into the Tempfile itself.
-      tmp.flush
+    # Flushing will write the buffer into the Tempfile itself.
+    tmp.flush
 
-      # Rewind will move the file pointer from the end to the beginning of the file, so that users can simple
-      # call the Read method.
-      tmp.rewind
+    # Rewind will move the file pointer from the end to the beginning of the file, so that users can simple
+    # call the Read method.
+    tmp.rewind
 
-      # Append the EventLogFile object into the result list
-      field_types = event_log_file.LogFileFieldTypes.split(',')
-      result << EventLogFile.new(field_types, tmp, event_log_file.EventType)
+    # Append the EventLogFile object into the result list
+    field_types = event_log_file.LogFileFieldTypes.split(',')
+    result = EventLogFile.new(field_types, tmp, event_log_file.EventType)
 
-      # Log the info from event_log_file object.
-      @logger.info("  #{LOG_KEY}: Id = #{event_log_file.Id}")
-      @logger.info("  #{LOG_KEY}: EventType = #{event_log_file.EventType}")
-      @logger.info("  #{LOG_KEY}: LogFile = #{event_log_file.LogFile}")
-      @logger.info("  #{LOG_KEY}: LogDate = #{event_log_file.LogDate}")
-      @logger.info("  #{LOG_KEY}: LogFileLength = #{event_log_file.LogFileLength}")
-      @logger.info("  #{LOG_KEY}: LogFileFieldTypes = #{event_log_file.LogFileFieldTypes}")
-      @logger.info('  ......................................')
-    end
+    # Log the info from event_log_file object.
+    @logger.info("  #{LOG_KEY}: Id = #{event_log_file.Id}")
+    @logger.info("  #{LOG_KEY}: EventType = #{event_log_file.EventType}")
+    @logger.info("  #{LOG_KEY}: LogFile = #{event_log_file.LogFile}")
+    @logger.info("  #{LOG_KEY}: LogDate = #{event_log_file.LogDate}")
+    @logger.info("  #{LOG_KEY}: LogFileLength = #{event_log_file.LogFileLength}")
+    @logger.info("  #{LOG_KEY}: LogFileFieldTypes = #{event_log_file.LogFileFieldTypes}")
+    @logger.info('  ......................................')
+    
     result
   end # def get_event_log_file_records
 end # QueueUtil
