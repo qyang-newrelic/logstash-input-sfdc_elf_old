@@ -5,7 +5,7 @@
 class StatePersistor
   LOG_KEY        = 'SFDC - StatePersistor'
   FILE_PREFIX    = 'sfdc_info_logstash'
-  DEFAULT_TIME   = (Time.now() - (60*60*24)).strftime('%FT%TZ')
+  DEFAULT_TIME   = '0001-01-01T00:00:00Z'
 
   def initialize(base_path, org_id)
     @logger = Cabin::Channel.get(LogStash)
