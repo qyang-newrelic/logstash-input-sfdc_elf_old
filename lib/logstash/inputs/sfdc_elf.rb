@@ -53,7 +53,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @client.client_id     = @client_id.value
     @client.client_secret = @client_secret.value
     @client.host          = @host
-    @client.version       = '33.0'
+    @client.version       = '44.0'
 
     # Authenticate the client
     @logger.info("#{LOG_KEY}: tyring to authenticate client")
