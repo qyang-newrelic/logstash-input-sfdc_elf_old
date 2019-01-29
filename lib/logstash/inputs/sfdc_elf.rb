@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'logstash/inputs/base'
 require 'logstash/namespace'
+require 'restforce'
 require_relative 'sfdc_elf/queue_util'
 require_relative 'sfdc_elf/state_persistor'
 require_relative 'sfdc_elf/scheduler'
