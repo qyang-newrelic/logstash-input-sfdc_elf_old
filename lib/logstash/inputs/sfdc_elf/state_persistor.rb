@@ -12,6 +12,10 @@ class StatePersistor
     @path_with_file_name = "#{base_path}/.#{FILE_PREFIX}_#{org_id}"
   end
 
+  public
+  def has_last_indexed_file
+    File.exist?(@path_with_file_name)
+  end
 
   # Read the last indexed LogDate from .sfdc_info_logstash file and return it. If the .sfdc_info_logstash file does
   # not exist then create the file and write DEFAULT_TIME to it using update_last_indexed_log_date() method.
@@ -19,7 +23,7 @@ class StatePersistor
   public
   def get_last_indexed_log_date
     # Read from .sfdc_info_logstash if it exists, otherwise load @last_read_log_date with DEFAULT_TIME.
-    if File.exist?(@path_with_file_name)
+    if has_last_indexed_file
       # Load last read LogDate from .sfdc_info_logstash.
       @logger.info("#{LOG_KEY}: .#{@path_with_file_name} does exist, read and return the time on it.")
       File.read(@path_with_file_name)

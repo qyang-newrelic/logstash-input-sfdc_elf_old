@@ -84,7 +84,9 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @state_persistor = StatePersistor.new(@path, @org_id)
 
     # Grab the last indexed log date.
+    @has_last_indexed_date = @state_persistor.has_last_indexed_file
     @last_indexed_log_date = @state_persistor.get_last_indexed_log_date
+
     @logger.info("#{LOG_KEY}: @last_indexed_log_date =  #{@last_indexed_log_date}")
   end  # def register
 
@@ -103,7 +105,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC LIMIT 100"
+                   #{@has_last_indexed_date ? "WHERE LogDate > #{@last_indexed_log_date}  AND Interval = 'Hourly'" : ""} 
+                   ORDER BY LogDate ASC"
 
 
       query_result_list = @client.query(soql_expr)
