@@ -57,15 +57,17 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
                               secureity_token: @security_token.value,
                               client_id: @client_id.value,
                               client_secret: @client_secret.value,
-                              authentication_callback: save_token,
+                              authentication_callback: Proc.new { |x| self.save_auth(x)} ,
                               api_version: '44.0')
-    rescue
+    rescue StandardError => e
       @logger.info("#{LOG_KEY}: authentication failed")
+
+      puts e.message  
+      puts e.backtrace.inspect  
       raise e 
     end
 
     @logger.info("#{LOG_KEY}: authenticating succeeded")
-
     # Save org id to distinguish between multiple orgs.
     @org_id = @client.query('select id from Organization').first.Id
 
@@ -130,11 +132,15 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
         @state_persistor.update_last_indexed_log_date(@last_indexed_log_date)
 
         # Creates events from query_result_list, then simply append the events to the queue.
-        @queue_util.enqueue_events(query_result_list, queue, @token)
+        @queue_util.enqueue_events(query_result_list, queue, @auth)
       end
     end # do loop
   end # def run
 
+
+  def save_auth(auth)
+    @auth = auth
+  end
 
 
 
@@ -150,7 +156,4 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @logger.info("#{LOG_KEY}: path = #{@path}")
   end
 
-  def save_token(token)
-    @token = token
-  end
 end # class LogStash::inputs::File

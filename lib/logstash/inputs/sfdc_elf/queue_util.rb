@@ -26,7 +26,7 @@ class QueueUtil
   # line by line and generating the event object for it. Then enqueue it.
 
   public
-  def enqueue_events(query_result_list, queue, token)
+  def enqueue_events(query_result_list, queue, auth)
     @logger.info("#{LOG_KEY}: enqueue events")
 
     # Grab a list of Tempfiles that contains CSV file data.
@@ -34,7 +34,7 @@ class QueueUtil
 
     # Iterate though each record.
     query_result_list.each do |result|
-      elf = get_event_log_file_records(result, token)
+      elf = get_event_log_file_records(result, auth)
       begin
         # Create local variable to simplify & make code more readable.
         tmp = elf.temp_file
@@ -145,10 +145,10 @@ class QueueUtil
   # where the user can read the Tempfile and then close it and unlink it, which will delete the file.
 
   public
-  def get_event_log_file_records(event_log_file, token)
+  def get_event_log_file_records(event_log_file, auth)
     @logger.info("#{LOG_KEY}: generating tempfile list")
     # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
-    tmp = Download.download(event_log_file.LogFile, token)
+    tmp = Download.download("#{auth.instance_url}/#{event_log_file.LogFile}", auth.access_token)
 
     # Flushing will write the buffer into the Tempfile itself.
     tmp.flush
