@@ -58,7 +58,7 @@ class Download
       IO.copy_stream(downloaded_file, tempfile.path)
       
       # We add the metadata that open-uri puts on the file (e.g. #content_type)
-      OpenURI::Meta.init temp_file, downloaded_file
+      OpenURI::Meta.init tempfile, downloaded_file
 
       downloaded_file = tempfile
     end
