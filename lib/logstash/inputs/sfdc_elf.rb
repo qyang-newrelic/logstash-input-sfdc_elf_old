@@ -57,7 +57,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
                               secureity_token: @security_token.value,
                               client_id: @client_id.value,
                               client_secret: @client_secret.value,
-                              authentication_callback: Proc.new { |x| self.save_auth(x)} ,
+                              authentication_callback: method(:save_auth) ,
                               api_version: '44.0')
     rescue StandardError => e
       @logger.info("#{LOG_KEY}: authentication failed")
@@ -138,10 +138,6 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
   end # def run
 
 
-  def save_auth(auth)
-    @auth = auth
-  end
-
 
 
   # Handel the @path variable passed by the user. If path does not exist then set @path to home directory.
@@ -155,5 +151,11 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     end
     @logger.info("#{LOG_KEY}: path = #{@path}")
   end
+
+
+  def save_auth(auth)
+    @auth = auth
+  end
+
 
 end # class LogStash::inputs::File
