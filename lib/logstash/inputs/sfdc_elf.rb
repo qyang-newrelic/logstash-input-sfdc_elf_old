@@ -103,7 +103,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC"
+                   WHERE LogDate > #{@last_indexed_log_date} AND Interval = 'Hourly' ORDER BY LogDate ASC LIMIT 100"
 
 
       query_result_list = @client.query(soql_expr)
