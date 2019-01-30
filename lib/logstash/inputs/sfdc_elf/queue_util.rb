@@ -17,10 +17,16 @@ class QueueUtil
 
   def initialize(logger)
     @logger = logger
+    @stop = false
   end
 
-
-
+  def stop=(s)
+    @stop = s
+  end
+  
+  def stop?
+   @stop
+  end
 
   # Given a list of query result's, iterate through it and grab the CSV file associated with it. Then parse the CSV file
   # line by line and generating the event object for it. Then enqueue it.
@@ -34,6 +40,7 @@ class QueueUtil
 
     # Iterate though each record.
     query_result_list.each do |result|
+      break if stop?
       elf = get_event_log_file_records(result, auth)
       unless state_persistor.log_read(result)
         begin

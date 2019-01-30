@@ -81,7 +81,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @queue_util = QueueUtil.new(@logger)
 
     # Handel when to schedule the next process based on the @poll_interval_in_hours config.
-    @scheduler = Scheduler.new(@poll_interval_in_seconds)
+    @scheduler = Scheduler.new(@logger, @poll_interval_in_seconds)
 
     # Handel state of the plugin based on the read and writes of LogDates to the .sdfc_info_logstash file.
     @state_persistor = StatePersistor.new(@logger, @path, @org_id)
@@ -91,6 +91,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @last_indexed_log_date = @state_persistor.get_last_indexed_log_date
 
     @logger.info("#{LOG_KEY}: @last_indexed_log_date =  #{@last_indexed_log_date}")
+
+    @stop = false
   end  # def register
 
 
@@ -120,8 +122,16 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
         # Creates events from query_result_list, then simply append the events to the queue.
         @queue_util.enqueue_events(query_result_list, queue, @auth, @state_persistor)
       end
+      break if @stop
     end # do loop
   end # def run
+
+  public
+  def stop 
+    @stop = true
+    @queue_util.stop = true
+    @scheduler.stop
+  end
 
 
 
