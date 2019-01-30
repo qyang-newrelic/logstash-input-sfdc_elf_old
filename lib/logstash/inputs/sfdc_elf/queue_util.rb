@@ -26,7 +26,7 @@ class QueueUtil
   # line by line and generating the event object for it. Then enqueue it.
 
   public
-  def enqueue_events(query_result_list, queue, auth)
+  def enqueue_events(query_result_list, queue, auth, state_persistor)
     @logger.info("#{LOG_KEY}: enqueue events")
 
     # Grab a list of Tempfiles that contains CSV file data.
@@ -54,6 +54,8 @@ class QueueUtil
           # create_event will return a event object.
           queue << create_event(schema, data, elf.event_type)
         end
+        log_Date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
+        state_persistor.update_last_indexed_log_date(log_Date)
       ensure
         # Close tmp file and unlink it, doing this will delete the actual tempfile.
         tmp.close

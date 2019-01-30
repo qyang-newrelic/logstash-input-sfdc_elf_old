@@ -108,7 +108,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   #{@has_last_indexed_date ? "WHERE LogDate > #{@last_indexed_log_date}  AND Interval = 'Hourly'" : ""} 
+                   WHERE LogDate > #{@last_indexed_log_date}  AND Interval = 'Hourly'
                    ORDER BY LogDate ASC"
 
 
@@ -117,22 +117,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       @logger.info("#{LOG_KEY}: query result size = #{query_result_list.size}")
 
       if query_result_list.size > 0
-        # query_result_list is in ascending order based on the LogDate, so grab the last one of the list and save the
-        # LogDate to @last_read_log_date and .sfdc_info_logstash
-        last_log = query_result_list.max_by { |l| l.LogDate }
-        @last_indexed_log_date = DateTime.parse(last_log.LogDate).strftime('%FT%T.%LZ')
-
-        # TODO: grab tempfiles here!!
-
-        # Overwrite the .sfdc_info_logstash file with the @last_read_log_date.
-        # Note: we currently do not support deduplication, but will implement it soon.
-        # TODO: need to implement deduplication
-        # TODO: might have to move this after enqueue_events(), in case of a crash in between.
-        # TODO: can do all @state_persistor calls after the if statement
-        @state_persistor.update_last_indexed_log_date(@last_indexed_log_date)
-
         # Creates events from query_result_list, then simply append the events to the queue.
-        @queue_util.enqueue_events(query_result_list, queue, @auth)
+        @queue_util.enqueue_events(query_result_list, queue, @auth, @state_persistor)
       end
     end # do loop
   end # def run
