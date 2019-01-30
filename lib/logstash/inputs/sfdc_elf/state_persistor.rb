@@ -45,9 +45,9 @@ class StatePersistor
   # because of the 'w' flag used with the File class.
   public 
   def add_log_read(result_row)
-    @logger.info("#{LOG_KEY}: adding #{result_row.EventType},#{result_row.LogDate} to #{@read_logs_path}")
+    @logger.info("#{LOG_KEY}: adding #{row_string(result_row)}")
     f = File.open(@read_logs_path, 'a')
-    f.write("#{result_row.EventType},#{result_row.LogDate}\n")
+    f.write("#{row_string(result_row)}\n")
     f.flush
     f.close
   end
@@ -63,11 +63,16 @@ class StatePersistor
 
   public
   def log_read(result_row)
-    last_indexed_date = self.get_last_indexed_log_date
-    if self.has_last_indexed_file? && DateTime.parse(result_row.LogDate) <= DateTime.parse(last_indexed_date)
-      matcher = Regexp.escape("#{result_row.EventType},#{result_row.LogDate}")
+    last_indexed_date = get_last_indexed_log_date
+    if has_last_indexed_file? && DateTime.parse(result_row.LogDate) <= DateTime.parse(last_indexed_date)
+      matcher = Regexp.escape(row_string(result_row))
       return File.readlines(@read_logs_path).grep(/#{matcher}/).size > 0
     end
     false
+  end
+
+  private 
+  def row_string(row)
+    "#{row.EventType},#{row.LogDate},#{row.Sequence}"
   end
 end
