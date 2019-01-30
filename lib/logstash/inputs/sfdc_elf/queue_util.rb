@@ -39,15 +39,15 @@ class QueueUtil
         begin
           # Create local variable to simplify & make code more readable.
           tmp = elf.temp_file
-
+          @logger.info("#{LOG_KEY}: parsing #{result.EventType}, #{result.LogDate}")
           # Get the schema from the first line in the tempfile. It will be in CSV format so we parse it, and it will
           # return an array.
-          schema = CSV.parse_line(tmp.readline, col_sep: SEPARATOR, quote_char: QUOTE_CHAR)
+          schema = CSV.parse_line(tmp.readline, col_sep: SEPARATOR, quote_char: QUOTE_CHAR, force_quotes: true)
 
           # Loop through tempfile, line by line.
           tmp.each_line do |line|
             # Parse the current line, it will return an string array.
-            string_array = CSV.parse_line(line, col_sep: SEPARATOR, quote_char: QUOTE_CHAR)
+            string_array = CSV.parse_line(line, col_sep: SEPARATOR, quote_char: QUOTE_CHAR, force_quotes: true)
 
             # Convert the string array into its corresponding type array.
             data = string_to_type_array(string_array, elf.field_types)
