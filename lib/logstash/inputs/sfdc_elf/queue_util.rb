@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'csv'
 require 'resolv'
+require_relative 'download'
 
 # Handel parsing data into event objects and then enqueue all of the events to the queue.
 class QueueUtil
@@ -25,7 +26,7 @@ class QueueUtil
   # line by line and generating the event object for it. Then enqueue it.
 
   public
-  def enqueue_events(query_result_list, queue, client)
+  def enqueue_events(query_result_list, queue, token)
     @logger.info("#{LOG_KEY}: enqueue events")
 
     # Grab a list of Tempfiles that contains CSV file data.
@@ -33,7 +34,7 @@ class QueueUtil
 
     # Iterate though each record.
     query_result_list.each do |result|
-      elf = get_event_log_file_records(result, client)
+      elf = get_event_log_file_records(result, token)
       begin
         # Create local variable to simplify & make code more readable.
         tmp = elf.temp_file
@@ -144,12 +145,10 @@ class QueueUtil
   # where the user can read the Tempfile and then close it and unlink it, which will delete the file.
 
   public
-  def get_event_log_file_records(event_log_file, client)
+  def get_event_log_file_records(event_log_file, token)
     @logger.info("#{LOG_KEY}: generating tempfile list")
     # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
-    tmp = Tempfile.new('sfdc_elf_tempfile')
-
-    tmp.write client.get(event_log_file.LogFile).body
+    tmp = Download.download(event_log_file.LogFile, token)
 
     # Flushing will write the buffer into the Tempfile itself.
     tmp.flush
@@ -170,7 +169,7 @@ class QueueUtil
     @logger.info("  #{LOG_KEY}: LogFileLength = #{event_log_file.LogFileLength}")
     @logger.info("  #{LOG_KEY}: LogFileFieldTypes = #{event_log_file.LogFileFieldTypes}")
     @logger.info('  ......................................')
-    
+
     result
   end # def get_event_log_file_records
 end # QueueUtil

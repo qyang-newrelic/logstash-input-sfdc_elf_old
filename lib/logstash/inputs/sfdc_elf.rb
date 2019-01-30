@@ -57,6 +57,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
                               secureity_token: @security_token.value,
                               client_id: @client_id.value,
                               client_secret: @client_secret.value,
+                              authentication_callback: save_token,
                               api_version: '44.0')
     rescue
       @logger.info("#{LOG_KEY}: authentication failed")
@@ -129,7 +130,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
         @state_persistor.update_last_indexed_log_date(@last_indexed_log_date)
 
         # Creates events from query_result_list, then simply append the events to the queue.
-        @queue_util.enqueue_events(query_result_list, queue, @client)
+        @queue_util.enqueue_events(query_result_list, queue, @token)
       end
     end # do loop
   end # def run
@@ -147,5 +148,9 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       @path = Dir.home
     end
     @logger.info("#{LOG_KEY}: path = #{@path}")
+  end
+
+  def save_token(token)
+    @token = token
   end
 end # class LogStash::inputs::File
