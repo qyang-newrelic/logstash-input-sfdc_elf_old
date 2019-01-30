@@ -78,7 +78,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     verify_path
 
     # Handel parsing the data into event objects and enqueue it to the queue.
-    @queue_util = QueueUtil.new
+    @queue_util = QueueUtil.new(@logger)
 
     # Handel when to schedule the next process based on the @poll_interval_in_hours config.
     @scheduler = Scheduler.new(@poll_interval_in_seconds)

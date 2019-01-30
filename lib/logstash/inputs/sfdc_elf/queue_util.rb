@@ -15,8 +15,8 @@ class QueueUtil
   EventLogFile = Struct.new(:field_types, :temp_file, :event_type)
 
 
-  def initialize
-    @logger = Cabin::Channel.get(LogStash)
+  def initialize(logger)
+    @logger = logger
   end
 
 
@@ -39,7 +39,6 @@ class QueueUtil
         begin
           # Create local variable to simplify & make code more readable.
           tmp = elf.temp_file
-          @logger.info("#{LOG_KEY}: parsing #{result.EventType}, #{result.LogDate}")
           # Get the schema from the first line in the tempfile. It will be in CSV format so we parse it, and it will
           # return an array.
           schema = CSV.parse_line(tmp.readline, col_sep: SEPARATOR, quote_char: QUOTE_CHAR, force_quotes: true)
@@ -113,6 +112,8 @@ class QueueUtil
     # Initaialize event to be used. @timestamp and @version is automatically added
     event = LogStash::Event.new
 
+    bad_ua = ["VisualforceRequest", "RestApi"]
+
     # Add column data pair to event.
     data.each_index do |i|
       # Grab current key.
@@ -123,6 +124,12 @@ class QueueUtil
       if schema_name == 'TIMESTAMP'
         epochmillis = DateTime.parse(data[i]).to_time.to_f
         event.timestamp = LogStash::Timestamp.at(epochmillis)
+      end
+
+      
+      #fix for user agents being numbers in some logs for some reason
+      if schema_name == "USER_AGENT" && bad_ua.include?(event_type)
+        schema_name = "UA_NUM"
       end
 
       # Allow Elasticsearch index's have to types set to EventType.
