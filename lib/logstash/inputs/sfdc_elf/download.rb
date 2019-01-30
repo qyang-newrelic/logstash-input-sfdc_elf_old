@@ -32,6 +32,7 @@ class Download
     # simply refuse a request which doesn't have a valid User-Agent.
     options["User-Agent"] = "Logstash/1.0.3"
     options["Authorization"] = "Bearer #{token}"
+    
     # It's good to shield ourselves from files that are too big. open-uri will
     # call this block as soon as it gets the "Content-Length" header, which means
     # that we can bail out before we download the file.
@@ -55,9 +56,11 @@ class Download
       tempfile = Tempfile.new("open-uri", binmode: true)
       # IO.copy_stream is the most efficient way of data transfer.
       IO.copy_stream(downloaded_file, tempfile.path)
-      downloaded_file = tempfile
+      
       # We add the metadata that open-uri puts on the file (e.g. #content_type)
-      OpenURI::Meta.init downloaded_file, StringIO
+      OpenURI::Meta.init temp_file, downloaded_file
+
+      downloaded_file = tempfile
     end
 
     downloaded_file # Finally
