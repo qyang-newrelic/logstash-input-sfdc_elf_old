@@ -35,31 +35,34 @@ class QueueUtil
     # Iterate though each record.
     query_result_list.each do |result|
       elf = get_event_log_file_records(result, auth)
-      begin
-        # Create local variable to simplify & make code more readable.
-        tmp = elf.temp_file
+      unless state_persistor.log_read(result)
+        begin
+          # Create local variable to simplify & make code more readable.
+          tmp = elf.temp_file
 
-        # Get the schema from the first line in the tempfile. It will be in CSV format so we parse it, and it will
-        # return an array.
-        schema = CSV.parse_line(tmp.readline, col_sep: SEPARATOR, quote_char: QUOTE_CHAR)
+          # Get the schema from the first line in the tempfile. It will be in CSV format so we parse it, and it will
+          # return an array.
+          schema = CSV.parse_line(tmp.readline, col_sep: SEPARATOR, quote_char: QUOTE_CHAR)
 
-        # Loop through tempfile, line by line.
-        tmp.each_line do |line|
-          # Parse the current line, it will return an string array.
-          string_array = CSV.parse_line(line, col_sep: SEPARATOR, quote_char: QUOTE_CHAR)
+          # Loop through tempfile, line by line.
+          tmp.each_line do |line|
+            # Parse the current line, it will return an string array.
+            string_array = CSV.parse_line(line, col_sep: SEPARATOR, quote_char: QUOTE_CHAR)
 
-          # Convert the string array into its corresponding type array.
-          data = string_to_type_array(string_array, elf.field_types)
+            # Convert the string array into its corresponding type array.
+            data = string_to_type_array(string_array, elf.field_types)
 
-          # create_event will return a event object.
-          queue << create_event(schema, data, elf.event_type)
+            # create_event will return a event object.
+            queue << create_event(schema, data, elf.event_type)
+          end
+        ensure
+          log_date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
+          state_persistor.update_last_indexed_log_date(log_date)
+          state_persistor.add_log_read(result)
+          # Close tmp file and unlink it, doing this will delete the actual tempfile.
+          tmp.close
+          tmp.unlink
         end
-        log_Date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
-        state_persistor.update_last_indexed_log_date(log_Date)
-      ensure
-        # Close tmp file and unlink it, doing this will delete the actual tempfile.
-        tmp.close
-        tmp.unlink
       end
     end # do loop, tempfile_list
   end # def create_event_list

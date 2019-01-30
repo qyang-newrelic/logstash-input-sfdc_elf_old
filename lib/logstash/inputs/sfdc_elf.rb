@@ -84,10 +84,10 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @scheduler = Scheduler.new(@poll_interval_in_seconds)
 
     # Handel state of the plugin based on the read and writes of LogDates to the .sdfc_info_logstash file.
-    @state_persistor = StatePersistor.new(@path, @org_id)
+    @state_persistor = StatePersistor.new(@logger, @path, @org_id)
 
     # Grab the last indexed log date.
-    @has_last_indexed_date = @state_persistor.has_last_indexed_file
+    @has_last_indexed_date = @state_persistor.has_last_indexed_file?
     @last_indexed_log_date = @state_persistor.get_last_indexed_log_date
 
     @logger.info("#{LOG_KEY}: @last_indexed_log_date =  #{@last_indexed_log_date}")
@@ -108,7 +108,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate > #{@last_indexed_log_date}  AND Interval = 'Hourly'
+                   WHERE LogDate >= #{@last_indexed_log_date}  AND Interval = 'Hourly'
                    ORDER BY LogDate ASC"
 
 
