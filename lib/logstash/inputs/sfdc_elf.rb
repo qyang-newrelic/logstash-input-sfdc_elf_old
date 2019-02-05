@@ -43,6 +43,11 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
   # Specify how often the plugin should grab new data in terms of minutes.
   config :poll_interval_in_minutes, validate: [*1..(24 * 60)], default: 60
 
+  # Specify date to query from if no file exists
+  config :last_index_date
+
+  # Specify whether logs should be grabbed as hourly instead of daily 
+  config :query_hourly, :validate => :boolean, default: true
 
   # The first part of logstash pipeline is register, where all instance variables are initialized.
 
@@ -88,10 +93,10 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
     # Grab the last indexed log date.
     @has_last_indexed_date = @state_persistor.has_last_indexed_file?
-    @last_indexed_log_date = @state_persistor.get_last_indexed_log_date
+    @last_indexed_log_date = @last_index_date || @state_persistor.get_last_indexed_log_date
 
     @logger.info("#{LOG_KEY}: @last_indexed_log_date =  #{@last_indexed_log_date}")
-
+    
     @stop = false
   end  # def register
 
@@ -103,6 +108,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
   public
   def run(queue)
+
     @scheduler.schedule do
       # Line for readable log statements.
       @logger.info('---------------------------------------------------')
@@ -110,10 +116,15 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate >= #{@last_indexed_log_date}  AND Interval = 'Hourly'
-                   ORDER BY LogDate ASC"
+                   WHERE LogDate >= #{@last_indexed_log_date} "
+      
+      soql_expr << (@query_hourly ? "AND Interval = 'Hourly' " : "")
+
+      soql_expr << "ORDER BY LogDate ASC "
 
 
+      @logger.info("#{LOG_KEY}: query(hourly #{@query_hourly}) = #{soql_expr}")
+      
       query_result_list = @client.query(soql_expr)
 
       @logger.info("#{LOG_KEY}: query result size = #{query_result_list.size}")
