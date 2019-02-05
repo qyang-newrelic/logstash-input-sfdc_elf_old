@@ -42,7 +42,7 @@ class QueueUtil
     query_result_list.each do |result|
       break if stop?
       elf = get_event_log_file_records(result, auth)
-      unless state_persistor.log_read(result)
+      if !state_persistor.log_read(result) && elf
         begin
           # Create local variable to simplify & make code more readable.
           tmp = elf.temp_file
@@ -61,10 +61,11 @@ class QueueUtil
             # create_event will return a event object.
             queue << create_event(schema, data, elf.event_type)
           end
-        ensure
+
           log_date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
           state_persistor.update_last_indexed_log_date(log_date)
           state_persistor.add_log_read(result)
+        ensure
           # Close tmp file and unlink it, doing this will delete the actual tempfile.
           tmp.close
           tmp.unlink
@@ -165,21 +166,25 @@ class QueueUtil
 
   public
   def get_event_log_file_records(event_log_file, auth)
-    @logger.info("#{LOG_KEY}: generating tempfile list")
-    # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
-    tmp = Download.download("#{auth.instance_url}/#{event_log_file.LogFile}", auth.access_token)
+    begin
+      @logger.info("#{LOG_KEY}: generating tempfile list")
+      # Get the path of the CSV file from the LogFile field, then stream the data to the .write method of the Tempfile
+      tmp = Download.download("#{auth.instance_url}/#{event_log_file.LogFile}", auth.access_token)
 
-    # Flushing will write the buffer into the Tempfile itself.
-    tmp.flush
+      # Flushing will write the buffer into the Tempfile itself.
+      tmp.flush
 
-    # Rewind will move the file pointer from the end to the beginning of the file, so that users can simple
-    # call the Read method.
-    tmp.rewind
+      # Rewind will move the file pointer from the end to the beginning of the file, so that users can simple
+      # call the Read method.
+      tmp.rewind
 
-    # Append the EventLogFile object into the result list
-    field_types = event_log_file.LogFileFieldTypes.split(',')
-    result = EventLogFile.new(field_types, tmp, event_log_file.EventType)
-
+      # Append the EventLogFile object into the result list
+      field_types = event_log_file.LogFileFieldTypes.split(',')
+      result = EventLogFile.new(field_types, tmp, event_log_file.EventType)
+    
+    rescue StandardError => e  
+      @logger.warn("#{LOG_KEY}: Unable to download EventLogFile! #{e.message}")
+    end
     # Log the info from event_log_file object.
     @logger.info("  #{LOG_KEY}: Id = #{event_log_file.Id}")
     @logger.info("  #{LOG_KEY}: EventType = #{event_log_file.EventType}")
