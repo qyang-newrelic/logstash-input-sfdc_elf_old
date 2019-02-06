@@ -92,7 +92,7 @@ class QueueUtil
         when 'Boolean'
           data[i] = (string_array[i].empty?) ? nil : (string_array[i] == '0')
         else # 'String', 'Id', 'EscapedString', 'Set'
-          data[i] = (string_array[i].empty?) ? nil : string_array[i]
+          data[i] = (string_array[i].empty?) ? nil : string_array[i].force_encoding('UTF-8')
       end
     end # do loop
 
