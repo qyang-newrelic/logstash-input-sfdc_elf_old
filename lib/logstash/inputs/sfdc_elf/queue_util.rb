@@ -66,8 +66,7 @@ class QueueUtil
           log_date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
           state_persistor.update_last_indexed_log_date(log_date)
         rescue StandardError => e
-          @logger.error("#{LOG_KEY}: failed to parse #{elf.EventType} #{elf.LogDate}")
-          @logger.error(e.message)
+          @logger.error("#{LOG_KEY}: failed to parse log!")
         ensure
           # Close tmp file and unlink it, doing this will delete the actual tempfile.
           tmp.close
