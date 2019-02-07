@@ -42,7 +42,7 @@ class QueueUtil
     query_result_list.each do |result|
       break if stop?
       elf = get_event_log_file_records(result, auth)
-      if !state_persistor.log_read(result) && elf
+      if elf
         begin
           # Create local variable to simplify & make code more readable.
           tmp = elf.temp_file
@@ -64,7 +64,6 @@ class QueueUtil
 
           log_date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
           state_persistor.update_last_indexed_log_date(log_date)
-          state_persistor.add_log_read(result)
         ensure
           # Close tmp file and unlink it, doing this will delete the actual tempfile.
           tmp.close
