@@ -52,6 +52,7 @@ class QueueUtil
 
           # Loop through tempfile, line by line.
           tmp.each_line do |line|
+            line = line.force_encoding("UTF-8")
             # Parse the current line, it will return an string array.
             string_array = CSV.parse_line(line, col_sep: SEPARATOR, quote_char: QUOTE_CHAR, force_quotes: true)
 
