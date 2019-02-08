@@ -112,7 +112,6 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @scheduler.schedule do
       # Line for readable log statements.
       @logger.info('---------------------------------------------------')
-
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
@@ -133,6 +132,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
         # Creates events from query_result_list, then simply append the events to the queue.
         @queue_util.enqueue_events(query_result_list, queue, @auth, @state_persistor)
       end
+      @last_indexed_log_date = @state_persistor.get_last_indexed_log_date
+
       break if @stop
     end # do loop
   end # def run
