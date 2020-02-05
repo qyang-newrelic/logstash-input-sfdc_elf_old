@@ -59,8 +59,9 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       @logger.info("#{LOG_KEY}: tyring to authenticate client")
       @client = Restforce.new(username: @username,
                               password: @password.value,
-                              secureity_token: @security_token.value,
+                              security_token: @security_token.value,
                               client_id: @client_id.value,
+                              host: @host,
                               client_secret: @client_secret.value,
                               authentication_callback: method(:save_auth) ,
                               api_version: '44.0')
