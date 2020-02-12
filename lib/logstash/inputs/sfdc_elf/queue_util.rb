@@ -62,7 +62,7 @@ class QueueUtil
 
             # create_event will return a event object.
             event =  create_event(schema, data, elf.event_type)
-	    sfdc_elf.decorate(event)
+	    sfdc_elf.deco(event)
             queue << event
           end
 
