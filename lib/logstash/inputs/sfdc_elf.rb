@@ -59,9 +59,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       @logger.info("#{LOG_KEY}: tyring to authenticate client")
       @client = Restforce.new(username: @username,
                               password: @password.value,
-                              security_token: @security_token.value,
+                              secureity_token: @security_token.value,
                               client_id: @client_id.value,
-                              host: @host,
                               client_secret: @client_secret.value,
                               authentication_callback: method(:save_auth) ,
                               api_version: '44.0')
@@ -131,7 +130,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
       if query_result_list.size > 0
         # Creates events from query_result_list, then simply append the events to the queue.
-        @queue_util.enqueue_events(query_result_list, queue, @auth, @state_persistor)
+        @queue_util.enqueue_events(query_result_list, self, queue, @auth, @state_persistor)
       end
       @last_indexed_log_date = @state_persistor.get_last_indexed_log_date
 

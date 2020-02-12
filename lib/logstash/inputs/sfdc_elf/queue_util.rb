@@ -32,7 +32,8 @@ class QueueUtil
   # line by line and generating the event object for it. Then enqueue it.
 
   public
-  def enqueue_events(query_result_list, queue, auth, state_persistor)
+  #def enqueue_events(query_result_list, queue, auth, state_persistor)
+  def enqueue_events(query_result_list, sfdc_elf, queue, auth, state_persistor)
     @logger.info("#{LOG_KEY}: enqueue events")
 
     # Grab a list of Tempfiles that contains CSV file data.
@@ -60,7 +61,9 @@ class QueueUtil
             data = string_to_type_array(string_array, elf.field_types)
 
             # create_event will return a event object.
-            queue << create_event(schema, data, elf.event_type)
+            event =  create_event(schema, data, elf.event_type)
+						sfdc_elf.decorate(event)
+            queue << event
           end
 
           log_date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
