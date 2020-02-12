@@ -164,6 +164,11 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
   def save_auth(auth)
     @auth = auth
   end
-
+  
+  public
+  def deco(event)
+    decorate(event)
+  end
+  
 
 end # class LogStash::inputs::File
