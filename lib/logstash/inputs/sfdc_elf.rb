@@ -94,7 +94,10 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
     # Grab the last indexed log date.
     @has_last_indexed_date = @state_persistor.has_last_indexed_file?
-    @last_indexed_log_date = @last_index_date || @state_persistor.get_last_indexed_log_date
+    
+    #@last_indexed_log_date = @last_index_date || @state_persistor.get_last_indexed_log_date
+    
+    @last_indexed_log_date = @has_last_indexed_date ? @state_persistor.get_last_indexed_log_date: @last_index_date || @state_persistor.get_last_indexed_log_date 
 
     @logger.info("#{LOG_KEY}: @last_indexed_log_date =  #{@last_indexed_log_date}")
     
