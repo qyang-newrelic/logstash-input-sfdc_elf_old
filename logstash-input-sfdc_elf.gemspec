@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name            = 'logstash-input-sfdc_elf'
-  s.version         = '1.0.2'
+  s.version         = '1.0.3'
   s.licenses        = ['MIT']
   s.summary         = 'A Logstash plugin the receives events from Salesforce EventLogFile'
   s.description     = 'This gem is a logstash plugin required to be installed on top of the Logstash core pipeline
