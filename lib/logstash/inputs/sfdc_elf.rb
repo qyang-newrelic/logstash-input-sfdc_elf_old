@@ -48,7 +48,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
   # Specify whether logs should be grabbed as hourly instead of daily 
   config :query_hourly, :validate => :boolean, default: true
-
+  
+  config :query_filter
   # The first part of logstash pipeline is register, where all instance variables are initialized.
 
   public
@@ -118,7 +119,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
                    WHERE LogDate >= #{@last_indexed_log_date} "
       
       soql_expr << (@query_hourly ? "AND Interval = 'Hourly' " : "")
-
+      soql_expr << (@query_filter ? "AND #{@query_filter} " : "")
       soql_expr << "ORDER BY LogDate ASC "
 
 
