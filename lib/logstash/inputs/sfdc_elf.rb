@@ -48,7 +48,8 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
   # Specify whether logs should be grabbed as hourly instead of daily 
   config :query_hourly, :validate => :boolean, default: true
-
+  
+  config :query_filter
   # The first part of logstash pipeline is register, where all instance variables are initialized.
 
   public
@@ -93,7 +94,10 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
     # Grab the last indexed log date.
     @has_last_indexed_date = @state_persistor.has_last_indexed_file?
-    @last_indexed_log_date = @last_index_date || @state_persistor.get_last_indexed_log_date
+    
+    #@last_indexed_log_date = @last_index_date || @state_persistor.get_last_indexed_log_date
+    
+    @last_indexed_log_date = @has_last_indexed_date ? @state_persistor.get_last_indexed_log_date: @last_index_date || @state_persistor.get_last_indexed_log_date 
 
     @logger.info("#{LOG_KEY}: @last_indexed_log_date =  #{@last_indexed_log_date}")
     
@@ -118,7 +122,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
                    WHERE LogDate >= #{@last_indexed_log_date} "
       
       soql_expr << (@query_hourly ? "AND Interval = 'Hourly' " : "")
-
+      soql_expr << (@query_filter ? "AND #{@query_filter} " : "")
       soql_expr << "ORDER BY LogDate ASC "
 
 
