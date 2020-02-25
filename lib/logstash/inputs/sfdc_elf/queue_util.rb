@@ -44,6 +44,7 @@ class QueueUtil
       break if stop?
 	    
       if state_persistor.log_read(result) 
+	@logger.info("#{LOG_KEY}:  #{row_string(result)} was processed, skip!")
         next
       end
 	    
