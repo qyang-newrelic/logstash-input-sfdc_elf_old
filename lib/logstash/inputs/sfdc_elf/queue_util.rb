@@ -43,7 +43,7 @@ class QueueUtil
     query_result_list.each do |result|
       break if stop?
 	    
-      if store_persistor.log_read(result) 
+      if state_persistor.log_read(result) 
         next
       end
 	    
