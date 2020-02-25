@@ -120,7 +120,7 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
       # Grab a list of SObjects, specifically EventLogFiles.
       soql_expr = "SELECT Id, EventType, Logfile, LogDate, LogFileLength, LogFileFieldTypes, Sequence, Interval
                    FROM EventLogFile
-                   WHERE LogDate > #{@last_indexed_log_date} "
+                   WHERE LogDate >= #{@last_indexed_log_date} "
       
       soql_expr << (@query_hourly ? "AND Interval = 'Hourly' " : "")
       soql_expr << (@query_filter ? "AND #{@query_filter} " : "")
