@@ -42,6 +42,11 @@ class QueueUtil
     # Iterate though each record.
     query_result_list.each do |result|
       break if stop?
+	    
+      if store_persistor.log_read(result) 
+        next
+      end
+	    
       elf = get_event_log_file_records(result, auth)
       if elf
         begin
@@ -68,6 +73,8 @@ class QueueUtil
 
           log_date = DateTime.parse(result.LogDate).strftime('%FT%T.%LZ')
           state_persistor.update_last_indexed_log_date(log_date)
+	  state_persistor.add_log_read(result)
+		
         rescue StandardError => e
           @logger.error("#{LOG_KEY}: failed to parse log!")
         ensure
