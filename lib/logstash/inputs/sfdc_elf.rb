@@ -48,6 +48,10 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
 
   # Specify whether logs should be grabbed as hourly instead of daily 
   config :query_hourly, :validate => :boolean, default: true
+
+  config :user_lookup, :validate => :boolean, default: false
+
+  config :user_query, default: "SELECT City,CompanyName,Country,Department,Division,Id,PostalCode,State,Street FROM User"
   
   config :query_filter
   # The first part of logstash pipeline is register, where all instance variables are initialized.
@@ -77,6 +81,18 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
     @logger.info("#{LOG_KEY}: authenticating succeeded")
     # Save org id to distinguish between multiple orgs.
     @org_id = @client.query('select id from Organization').first.Id
+
+    if @user_lookup  
+      @logger.info("User Query for lookup: #{@user_query}")
+      user_info = @client.query(@user_query)
+      @sfdc_users = Hash.new(nil);
+      user_info.each do | user  |
+        if user.Id? 
+          @sfdc_users[user.Id.upcase.to_sym] = user
+          #@logger.info("Pull User Info: #{@sfdc_users[user.Id.upcase.to_sym]}")
+        end  
+      end
+    end 
 
     # Set up time interval for forever while loop.
     @poll_interval_in_seconds = @poll_interval_in_minutes * 60
@@ -172,6 +188,20 @@ class LogStash::Inputs::SfdcElf < LogStash::Inputs::Base
   
   public
   def deco(event)
+    user_id = event.get("USER_ID_DERIVED")
+    if @user_lookup &&  user_id != nil 
+      #@logger.info("User Attribute:#{user_id}")
+      user = @sfdc_users[user_id.upcase.to_sym] 
+      if user != nil
+        @logger.info("Found User :#{user_id}=#{user}")
+        user.each do |key , value| 
+          if ! ["attributes", "Id"].include?(key) 
+            @logger.info("User Attribute:#{key}:#{value}")
+            event.set(key,value)
+          end
+        end
+      end
+    end
     decorate(event)
   end
   
